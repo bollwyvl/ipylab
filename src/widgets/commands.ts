@@ -11,13 +11,15 @@ import {
 
 import { ArrayExt } from '@lumino/algorithm';
 
-import { CommandRegistry } from '@lumino/commands';
+import type { CommandRegistry } from '@lumino/commands';
 
-import { ReadonlyPartialJSONObject } from '@lumino/coreutils';
+import type { JSONObject, ReadonlyPartialJSONObject } from '@lumino/coreutils';
 
-import { IDisposable } from '@lumino/disposable';
+import type { IDisposable } from '@lumino/disposable';
 
 import { MODULE_NAME, MODULE_VERSION } from '../version';
+
+import type AjvType from 'ajv';
 
 /**
  * The model for a command registry.
@@ -67,10 +69,13 @@ export class CommandRegistryModel extends WidgetModel {
    *
    * @param msg The message to handle.
    */
-  private async _onMessage(msg: any): Promise<void> {
+  private async _onMessage(msg: Private.TAnyMessage): Promise<void> {
     switch (msg.func) {
       case 'execute':
-        this._execute(msg.payload);
+        await this._execute(msg.payload);
+        break;
+      case 'describe':
+        await this._describe(msg.payload);
         break;
       case 'addCommand': {
         await this._addCommand(msg.payload);
@@ -100,16 +105,102 @@ export class CommandRegistryModel extends WidgetModel {
   /**
    * Execute a command
    *
-   * @param bundle The command bundle.
-   * @param bundle.id
-   * @param bundle.args
+   * @param options The execute options.
    */
-  private _execute(bundle: {
-    id: string;
-    args: ReadonlyPartialJSONObject;
-  }): void {
-    const { id, args } = bundle;
-    void this._commands.execute(id, args);
+  private async _execute(options: Private.IExecuteOptions): Promise<void> {
+    const { id, args, validate, result_id } = options;
+
+    const message: Private.IResult = {
+      event: 'executed',
+      result_id,
+      result: null,
+      errors: []
+    };
+
+    try {
+      validate && (await this._validateArgs(options));
+      message.result = await this._commands.execute(id, args);
+    } catch (err: any) {
+      message.errors.push(`${err}`);
+    }
+
+    if (!result_id) {
+      return;
+    }
+
+    try {
+      // results _should_ be well-formed JSON...
+      message.result = JSON.parse(JSON.stringify(message.result));
+    } catch (err) {
+      // ... but in practice often aren't, and may have hot widget/DOM handles
+      message.result = `${message.result}`;
+    }
+
+    this.send(message, {});
+  }
+  /**
+   * Get command information.
+   *
+   * @param options The execute options.
+   */
+  private async _describe(options: Private.IDescribeOptions): Promise<void> {
+    const { id, result_id, args } = options;
+    const message: Private.IResult = {
+      result_id,
+      event: 'described',
+      result: { id },
+      errors: []
+    };
+
+    const promises: Promise<void>[] = [];
+
+    for (const key of Private.DESCRIBE_KEYS) {
+      promises.push(
+        this._reduceInfo(message.result, message.errors, key, id, args)
+      );
+    }
+
+    await Promise.all(promises);
+
+    this.send(message, {});
+  }
+
+  private async _reduceInfo(
+    result: Record<string, any>,
+    errors: any[],
+    key: Private.TDecribeKey,
+    id: string,
+    args: ReadonlyPartialJSONObject
+  ): Promise<void> {
+    const infoMethods: Private.IDescribeMethods = {
+      label: this._commands.label,
+      caption: this._commands.caption,
+      described_by: this._commands.describedBy,
+      icon_class: this._commands.iconClass
+    };
+    try {
+      const r = await infoMethods[key].bind(this._commands)(id, args);
+      result[key] = JSON.parse(JSON.stringify(r));
+    } catch (err) {
+      errors.push({ [key]: `${err}` });
+    }
+  }
+
+  /**
+   * Validate command args (if constrained)
+   *
+   * @param options The validation options.
+   */
+  private async _validateArgs(options: Private.IExecuteOptions): Promise<void> {
+    const { id, args } = options;
+    const describedBy = await this._commands.describedBy(id, args);
+    if (!describedBy.args) {
+      return;
+    }
+    const ajv = await Private.ajv();
+    if (!ajv.validate(describedBy.args, options.args)) {
+      throw new Error(JSON.stringify(ajv.errors, null, 2));
+    }
   }
 
   /**
@@ -118,9 +209,9 @@ export class CommandRegistryModel extends WidgetModel {
    * @param options The command options.
    */
   private async _addCommand(
-    options: CommandRegistry.ICommandOptions & { id: string }
+    options: Private.IAddCommandOptions
   ): Promise<void> {
-    const { id, caption, label, iconClass, icon } = options;
+    const { id, caption, label, iconClass, icon, describedBy } = options;
     if (this._commands.hasCommand(id)) {
       Private.customCommands.get(id).dispose();
     }
@@ -133,6 +224,7 @@ export class CommandRegistryModel extends WidgetModel {
     const commandEnabled = (command: IDisposable): boolean => {
       return !command.isDisposed && !!this.comm && this.comm_live;
     };
+
     const command = this._commands.addCommand(id, {
       caption,
       label,
@@ -146,7 +238,8 @@ export class CommandRegistryModel extends WidgetModel {
         this.send({ event: 'execute', id, args: JSON.stringify(args) }, {});
       },
       isEnabled: () => commandEnabled(command),
-      isVisible: () => commandEnabled(command)
+      isVisible: () => commandEnabled(command),
+      describedBy
     });
     Private.customCommands.set(id, command);
     this._sendCommandList();
@@ -155,11 +248,10 @@ export class CommandRegistryModel extends WidgetModel {
   /**
    * Remove a command from the command registry.
    *
-   * @param bundle The command bundle.
-   * @param bundle.id
+   * @param options The options for removing the command.
    */
-  private _removeCommand(bundle: { id: string }): void {
-    const { id } = bundle;
+  private _removeCommand(options: Private.IRemoveCommandOptions): void {
+    const { id } = options;
     if (Private.customCommands.has(id)) {
       Private.customCommands.get(id).dispose();
     }
@@ -191,4 +283,88 @@ export class CommandRegistryModel extends WidgetModel {
  */
 namespace Private {
   export const customCommands = new ObservableMap<IDisposable>();
+  let _ajv: AjvType | null = null;
+
+  export const DESCRIBE_KEYS = [
+    'label',
+    'caption',
+    'icon_class',
+    'described_by'
+  ];
+  export type TDecribeKey = (typeof DESCRIBE_KEYS)[number];
+
+  export interface IDescribeMethods {
+    [key: TDecribeKey]: (id: string, args: ReadonlyPartialJSONObject) => any;
+  }
+
+  export async function ajv(): Promise<AjvType> {
+    if (!_ajv) {
+      const Ajv = (await import('ajv')).default;
+      _ajv = new Ajv({ validateFormats: true });
+    }
+    return _ajv;
+  }
+
+  export type TAnyMessage = IExecute | IDescribe | IAddCommand | IRemoveCommand;
+
+  export interface IMessage {
+    func: string;
+    payload: any;
+  }
+
+  export interface IAddCommand extends IMessage {
+    func: 'addCommand';
+    payload: IAddCommandOptions;
+  }
+
+  export interface IWithCommandId {
+    /** command id */
+    id: string;
+  }
+
+  export interface IDescribe extends IWithCommandId {
+    func: 'describe';
+    payload: IDescribeOptions;
+  }
+
+  export interface IExecute extends IMessage {
+    func: 'execute';
+    payload: IExecuteOptions;
+  }
+
+  export interface ICommonOptions extends IWithCommandId {
+    /** optional command args */
+    args?: ReadonlyPartialJSONObject;
+    /** an optional identifier for an expected result */
+    result_id?: string | null;
+  }
+
+  export interface IExecuteOptions extends ICommonOptions {
+    /** whether to pre-validate args before execution (if defined) */
+    validate?: boolean;
+  }
+  export interface IDescribeOptions extends ICommonOptions {
+    result_id: string;
+  }
+
+  export interface IAddCommandOptions
+    extends IWithCommandId,
+      CommandRegistry.ICommandOptions {}
+
+  export interface IRemoveCommand extends IMessage {
+    func: 'removeCommand';
+    payload: IRemoveCommandOptions;
+  }
+
+  export interface IRemoveCommandOptions extends IWithCommandId {}
+
+  export interface IResult extends JSONObject {
+    event: 'executed' | 'described';
+    /** the execution request */
+    result_id: string;
+    /** a result, if successful */
+    result: any;
+    /** an error string, if failed */
+    errors: any[];
+  }
 }

@@ -1,15 +1,22 @@
 # Copyright (c) ipylab contributors.
 # Distributed under the terms of the Modified BSD License.
-import json
-from collections import defaultdict
 
-from ipywidgets import CallbackDispatcher, Widget, register
-from traitlets import List, Unicode
+from __future__ import annotations
+import json
+from uuid import uuid4
+from collections import defaultdict
+from typing import Any, TYPE_CHECKING, Protocol
+
+from ipywidgets import Widget, register
+from traitlets import List, Unicode, Bool
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from ._frontend import module_name, module_version
 
 
-def _noop():
+def _noop(*args: Any, **kwargs: Any):
     pass
 
 
@@ -36,6 +43,9 @@ class CommandPalette(Widget):
         )
 
 
+class ExecuteHandler(Protocol):
+    def __call__(self, result: str | None, error: str | None) -> None: ...
+
 @register
 class CommandRegistry(Widget):
     _model_name = Unicode("CommandRegistryModel").tag(sync=True)
@@ -44,27 +54,85 @@ class CommandRegistry(Widget):
 
     _command_list = List(Unicode, read_only=True).tag(sync=True)
     _commands = List([], read_only=True).tag(sync=True)
+
     _execute_callbacks = defaultdict(_noop)
+    _result_callbacks = defaultdict(_noop)
+
+    validate_execute_args = Bool(
+        default=False,
+        help="whether to validate args before execution",
+    ).tag(sync=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.on_msg(self._on_frontend_msg)
 
     def _on_frontend_msg(self, _, content, buffers):
-        if content.get("event", "") == "execute":
+        event = content.get("event")
+
+        if event == "execute":
             command_id = content.get("id")
             args = json.loads(content.get("args"))
             self._execute_callbacks[command_id](**args)
 
-    def execute(self, command_id, args=None):
-        args = args or {}
-        self.send({"func": "execute", "payload": {"id": command_id, "args": args}})
+        if event in {"executed", "described"}:
+            result_id = content.get("result_id")
+            result = content.get("result")
+            error = content.get("error")
+            callback = self._result_callbacks[result_id]
+            callback(result, error)
+
+    def _make_result_handler(self, handler: ExecuteHandler) -> str:
+        result_id = f"{uuid4()}"
+
+        def _on_executed(result: str | None, error: str | None) -> None:
+            try:
+                self._result_callbacks.pop(result_id, _noop)
+                handler(result=result, error=error)
+            except Exception as err:
+                self.log.error("handler error %s", err)
+
+
+        self._result_callbacks[result_id] = _on_executed
+        return result_id
+
+    def execute(
+        self,
+        command_id: str,
+        args: dict[str, Any] | None=None,
+        handler: ExecuteHandler | None=None,
+        *,
+        validate: bool | None=None,
+    ):
+        payload = {
+            "id": command_id,
+            "args": args or {},
+            "validate": validate if validate is not None else self.validate_execute_args,
+            "result_id": self._make_result_handler(handler) if handler else None,
+        }
+        self.send({"func": "execute", "payload": payload})
+
+    def describe(self, command_id: str, args: dict[str, Any], handler: ExecuteHandler) -> None:
+        payload = {
+            "id": command_id,
+            "args": args or {},
+            "result_id": self._make_result_handler(handler),
+        }
+        self.send({"func": "describe", "payload": payload})
 
     def list_commands(self):
         return self._command_list
 
     def add_command(
-        self, command_id, execute, *, caption="", label="", icon_class="", icon=None
+        self,
+        command_id,
+        execute,
+        *,
+        caption="",
+        label="",
+        icon_class="",
+        icon=None,
+        described_by=None,
     ):
         if command_id in self._command_list:
             raise Exception(f"Command {command_id} is already registered")
@@ -79,6 +147,7 @@ class CommandRegistry(Widget):
                     "label": label,
                     "iconClass": icon_class,
                     "icon": f"IPY_MODEL_{icon.model_id}" if icon else None,
+                    "describedBy": described_by
                 },
             }
         )
