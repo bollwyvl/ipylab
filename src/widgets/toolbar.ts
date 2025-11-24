@@ -1,18 +1,15 @@
 // Copyright (c) ipylab contributors
 // Distributed under the terms of the Modified BSD License.
 
-import {
-  ISerializers,
-  unpack_models,
-  WidgetModel
-} from '@jupyter-widgets/base';
-import { CommandRegistry } from '@lumino/commands';
+import type { ISerializers } from '@jupyter-widgets/base';
+import { unpack_models, WidgetModel } from '@jupyter-widgets/base';
+import type { CommandRegistry } from '@lumino/commands';
 import { MODULE_NAME, MODULE_VERSION } from '../version';
-import { INotebookTracker } from '@jupyterlab/notebook';
+import type { INotebookTracker } from '@jupyterlab/notebook';
 import { ToolbarButton } from '@jupyterlab/apputils';
-import { Widget } from '@lumino/widgets';
+import type { Widget } from '@lumino/widgets';
 import { LabIcon } from '@jupyterlab/ui-components';
-import { Toolbar } from '@jupyterlab/ui-components';
+import type { Toolbar } from '@jupyterlab/ui-components';
 import { ObservableMap } from '@jupyterlab/observables';
 
 interface IToolbarButtonOptions {

@@ -1,19 +1,17 @@
 // Copyright (c) ipylab contributors
 // Distributed under the terms of the Modified BSD License.
 
-import { JupyterFrontEnd, ILabShell } from '@jupyterlab/application';
+import type { JupyterFrontEnd, ILabShell } from '@jupyterlab/application';
 
 import { DOMUtils } from '@jupyterlab/apputils';
 
-import {
-  ISerializers,
-  WidgetModel,
-  unpack_models
-} from '@jupyter-widgets/base';
+import type { ISerializers } from '@jupyter-widgets/base';
+import { WidgetModel, unpack_models } from '@jupyter-widgets/base';
 
 import { ArrayExt } from '@lumino/algorithm';
 
-import { Message, MessageLoop } from '@lumino/messaging';
+import type { Message } from '@lumino/messaging';
+import { MessageLoop } from '@lumino/messaging';
 
 import { MODULE_NAME, MODULE_VERSION } from '../version';
 

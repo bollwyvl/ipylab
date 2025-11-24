@@ -1,17 +1,14 @@
 // Copyright (c) ipylab contributors
 // Distributed under the terms of the Modified BSD License.
 
-import { ICommandPalette, IPaletteItem } from '@jupyterlab/apputils';
+import type { ICommandPalette, IPaletteItem } from '@jupyterlab/apputils';
 
 import { ObservableMap } from '@jupyterlab/observables';
 
-import {
-  DOMWidgetModel,
-  ISerializers,
-  WidgetModel
-} from '@jupyter-widgets/base';
+import type { ISerializers } from '@jupyter-widgets/base';
+import { DOMWidgetModel, WidgetModel } from '@jupyter-widgets/base';
 
-import { IDisposable } from '@lumino/disposable';
+import type { IDisposable } from '@lumino/disposable';
 
 import { MODULE_NAME, MODULE_VERSION } from '../version';
 

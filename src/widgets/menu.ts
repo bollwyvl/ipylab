@@ -1,27 +1,24 @@
 // Copyright (c) ipylab contributors
 // Distributed under the terms of the Modified BSD License.
 
-import { JupyterFrontEnd } from '@jupyterlab/application';
-import { IMainMenu, MainMenu } from '@jupyterlab/mainmenu';
+import type { JupyterFrontEnd } from '@jupyterlab/application';
+import type { IMainMenu, MainMenu } from '@jupyterlab/mainmenu';
 import { Menu } from '@lumino/widgets';
 
+import type { ISerializers } from '@jupyter-widgets/base';
 import {
-  ISerializers,
   WidgetModel
   //unpack_models
 } from '@jupyter-widgets/base';
 
 import { MODULE_NAME, MODULE_VERSION } from '../version';
-import { CommandRegistry } from '@lumino/commands';
-import { Cell } from '@jupyterlab/cells';
-import {
-  INotebookTracker,
-  NotebookActions,
-  NotebookPanel
-} from '@jupyterlab/notebook';
-import { IDisposable } from '@lumino/disposable';
+import type { CommandRegistry } from '@lumino/commands';
+import type { Cell } from '@jupyterlab/cells';
+import type { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
+import { NotebookActions } from '@jupyterlab/notebook';
+import type { IDisposable } from '@lumino/disposable';
 import { ObservableMap } from '@jupyterlab/observables';
-import { ReadonlyJSONObject } from '@lumino/coreutils';
+import type { ReadonlyJSONObject } from '@lumino/coreutils';
 
 namespace CommandIDs {
   export const snippet = 'custom-menu:snippet';

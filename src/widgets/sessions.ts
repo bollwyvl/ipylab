@@ -3,11 +3,12 @@
 
 // SessionManager exposes `JupyterLab.serviceManager.sessions` to user python kernel
 
-import { ISerializers, WidgetModel } from '@jupyter-widgets/base';
+import type { ISerializers } from '@jupyter-widgets/base';
+import { WidgetModel } from '@jupyter-widgets/base';
 import { toArray } from '@lumino/algorithm';
 import { MODULE_NAME, MODULE_VERSION } from '../version';
-import { Session } from '@jupyterlab/services';
-import { ILabShell, JupyterFrontEnd } from '@jupyterlab/application';
+import type { Session } from '@jupyterlab/services';
+import type { ILabShell, JupyterFrontEnd } from '@jupyterlab/application';
 
 /**
  * The model for a Session Manager

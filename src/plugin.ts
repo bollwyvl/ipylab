@@ -1,11 +1,11 @@
 // Copyright (c) ipylab contributors
 // Distributed under the terms of the Modified BSD License.
 
-import {
+import type {
   JupyterFrontEndPlugin,
-  JupyterFrontEnd,
-  ILabShell
+  JupyterFrontEnd
 } from '@jupyterlab/application';
+import { ILabShell } from '@jupyterlab/application';
 
 import { ICommandPalette } from '@jupyterlab/apputils';
 

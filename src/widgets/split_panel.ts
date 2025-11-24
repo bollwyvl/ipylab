@@ -1,11 +1,11 @@
 // Copyright (c) ipylab contributors
 // Distributed under the terms of the Modified BSD License.
 
-import { JupyterLuminoWidget, DOMWidgetView } from '@jupyter-widgets/base';
+import type { JupyterLuminoWidget, DOMWidgetView } from '@jupyter-widgets/base';
 
 import { VBoxView } from '@jupyter-widgets/controls';
 
-import { Message } from '@lumino/messaging';
+import type { Message } from '@lumino/messaging';
 
 import { SplitPanel } from '@lumino/widgets';
 

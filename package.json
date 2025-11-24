@@ -93,7 +93,9 @@
         "@lumino/commands": "^2",
         "@lumino/disposable": "^1.10.2 || ^2",
         "@lumino/messaging": "^1.10.2 || ^2",
-        "@lumino/widgets": "^2"
+        "@lumino/widgets": "^2",
+        "ajv": "^8.12.0",
+        "jquery": "^3.1.1"
     },
     "devDependencies": {
         "@jupyterlab/builder": "^4.0.0",
@@ -133,6 +135,18 @@
             "@jupyter-widgets/base": {
                 "bundled": false,
                 "singleton": true
+            },
+            "@jupyter-widgets/controls": {
+                "bundled": false,
+                "singleton": true
+            },
+            "ajv": {
+                "bundled": true,
+                "singleton": false
+            },
+            "jquery": {
+                "bundled": false,
+                "singleton": false
             }
         }
     },
@@ -152,6 +166,13 @@
             "@typescript-eslint"
         ],
         "rules": {
+            "@typescript-eslint/consistent-type-imports": [
+                "error",
+                {
+                    "prefer": "type-imports",
+                    "fixStyle": "separate-type-imports"
+                }
+            ],
             "@typescript-eslint/naming-convention": [
                 "error",
                 {

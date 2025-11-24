@@ -122,3 +122,6 @@ dmypy.json
 
 # extension update
 _temp_extension
+
+# lite
+.jupyterlite.doit.db

@@ -1,13 +1,10 @@
 // Copyright (c) ipylab contributors
 // Distributed under the terms of the Modified BSD License.
 
-import { JupyterFrontEnd } from '@jupyterlab/application';
+import type { JupyterFrontEnd } from '@jupyterlab/application';
 
-import {
-  DOMWidgetModel,
-  ISerializers,
-  WidgetModel
-} from '@jupyter-widgets/base';
+import type { ISerializers } from '@jupyter-widgets/base';
+import { DOMWidgetModel, WidgetModel } from '@jupyter-widgets/base';
 
 import { MODULE_NAME, MODULE_VERSION } from '../version';
 

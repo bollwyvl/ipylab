@@ -44,7 +44,7 @@ class CommandPalette(Widget):
 
 
 class ExecuteHandler(Protocol):
-    def __call__(self, result: str | None, error: str | None) -> None: ...
+    def __call__(self, result: Any, errors: list[Any]) -> None: ...
 
 @register
 class CommandRegistry(Widget):
@@ -72,26 +72,38 @@ class CommandRegistry(Widget):
 
         if event == "execute":
             command_id = content.get("id")
-            args = json.loads(content.get("args"))
-            self._execute_callbacks[command_id](**args)
+            result_id = content.get("result_id")
+            args = content.get("args")
+            result = None
+            errors = []
+            try:
+                result = self._execute_callbacks[command_id](**args)
+            except Exception as err:
+                errors += [err]
+            payload = {
+                "id": command_id,
+                "result_id": result_id,
+                "result": result,
+                "errors": errors
+            }
+            self.send({"func": "finishExecute", "payload": payload})
 
         if event in {"executed", "described"}:
             result_id = content.get("result_id")
             result = content.get("result")
-            error = content.get("error")
+            errors = content.get("errors", [])
             callback = self._result_callbacks[result_id]
-            callback(result, error)
+            callback(result, errors)
 
     def _make_result_handler(self, handler: ExecuteHandler) -> str:
         result_id = f"{uuid4()}"
 
-        def _on_executed(result: str | None, error: str | None) -> None:
+        def _on_executed(result: Any, errors: list[Any]) -> None:
             try:
                 self._result_callbacks.pop(result_id, _noop)
-                handler(result=result, error=error)
+                handler(result, errors)
             except Exception as err:
                 self.log.error("handler error %s", err)
-
 
         self._result_callbacks[result_id] = _on_executed
         return result_id
