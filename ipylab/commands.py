@@ -46,6 +46,7 @@ class CommandPalette(Widget):
 class ExecuteHandler(Protocol):
     def __call__(self, result: Any, errors: list[Any]) -> None: ...
 
+
 @register
 class CommandRegistry(Widget):
     _model_name = Unicode("CommandRegistryModel").tag(sync=True)
@@ -84,7 +85,7 @@ class CommandRegistry(Widget):
                 "id": command_id,
                 "result_id": result_id,
                 "result": result,
-                "errors": errors
+                "errors": errors,
             }
             self.send({"func": "finishExecute", "payload": payload})
 
@@ -111,20 +112,24 @@ class CommandRegistry(Widget):
     def execute(
         self,
         command_id: str,
-        args: dict[str, Any] | None=None,
-        handler: ExecuteHandler | None=None,
+        args: dict[str, Any] | None = None,
+        handler: ExecuteHandler | None = None,
         *,
-        validate: bool | None=None,
+        validate: bool | None = None,
     ):
         payload = {
             "id": command_id,
             "args": args or {},
-            "validate": validate if validate is not None else self.validate_execute_args,
+            "validate": (
+                validate if validate is not None else self.validate_execute_args
+            ),
             "result_id": self._make_result_handler(handler) if handler else None,
         }
         self.send({"func": "execute", "payload": payload})
 
-    def describe(self, command_id: str, args: dict[str, Any], handler: ExecuteHandler) -> None:
+    def describe(
+        self, command_id: str, args: dict[str, Any], handler: ExecuteHandler
+    ) -> None:
         payload = {
             "id": command_id,
             "args": args or {},
@@ -159,7 +164,7 @@ class CommandRegistry(Widget):
                     "label": label,
                     "iconClass": icon_class,
                     "icon": f"IPY_MODEL_{icon.model_id}" if icon else None,
-                    "describedBy": described_by
+                    "describedBy": described_by,
                 },
             }
         )
