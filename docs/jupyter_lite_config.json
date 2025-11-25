@@ -1,4 +1,12 @@
 {
+  "LiteBuildConfig": {
+    "contents": ["."],
+    "output_dir": "../build/docs-app",
+    "federated_extensions": [
+      "https://files.pythonhosted.org/packages/py2.py3/b/bqplot/bqplot-0.12.45-py2.py3-none-any.whl",
+      "https://files.pythonhosted.org/packages/py2.py3/i/ipytree/ipytree-0.2.2-py2.py3-none-any.whl"
+    ]
+  },
   "PipliteAddon": {
     "piplite_urls": [
       "../dist",

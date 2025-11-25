@@ -1,0 +1,6 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jupyterlite/jupyterlite/refs/heads/main/app/jupyterlite.schema.v0.json",
+  "jupyter-config-data": {
+    "disabledExtensions": ["jupyterlab-jupytext"]
+  }
+}
