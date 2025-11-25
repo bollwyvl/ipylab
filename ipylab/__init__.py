@@ -9,5 +9,6 @@ from .icon import Icon
 
 __all__ = ["__version__", "JupyterFrontEnd", "Panel", "SplitPanel", "Icon"]
 
+
 def _jupyter_labextension_paths():
     return [{"src": "labextension", "dest": "ipylab"}]
