@@ -2,8 +2,9 @@
   "PipliteAddon": {
     "piplite_urls": [
       "../dist",
-      "https://files.pythonhosted.org/packages/py3/i/ipywidgets/ipywidgets-8.1.8-py3-none-any.whl",
-      "https://files.pythonhosted.org/packages/73/03/6b5370fc626e6f480c4a0b4cb25b3459d390745010618b21b4b573423a53/bqplot-0.12.45-py2.py3-none-any.whl"
+      "https://files.pythonhosted.org/packages/py2.py3/i/bqplot/bqplot-0.12.45-py2.py3-none-any.whl",
+      "https://files.pythonhosted.org/packages/py2.py3/i/ipytree/ipytree-0.2.2-py2.py3-none-any.whl",
+      "https://files.pythonhosted.org/packages/py3/i/ipywidgets/ipywidgets-8.1.8-py3-none-any.whl"
     ]
   }
 }
