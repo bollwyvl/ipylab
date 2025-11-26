@@ -1,8 +1,7 @@
 name: ipylab-lite
 channels:
-  - conda-forge/label/jupyterlite_pyodide_kernel_rc
-  - conda-forge/label/jupyterlite_core_rc
   - conda-forge
+  - nodefaults
 dependencies:
   # runtimes
   - python 3.11.*
@@ -18,9 +17,6 @@ dependencies:
   - myst-parser
   # demo
   - jupyterlab >=4,<5
-  - jupyterlite-core >=0.7.0rc2,<0.8
-  - jupyterlite-pyodide-kernel >=0.7.0rc1,<0.8
+  - jupyterlite-core >=0.7.0,<0.8
+  - jupyterlite-pyodide-kernel >=0.7.0,<0.8
   - jupyterlite-sphinx >=0.20.2,<0.21.0
-  # install dev
-  - pip:
-      - ..
