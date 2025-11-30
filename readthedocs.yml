@@ -10,9 +10,6 @@ build:
       - jlpm
       - jlpm build
       - python -m build --wheel
-python:
-  install:
-  - method: pip
-    path: .
+      - python -m pip install dist/*.whl --no-deps
 conda:
   environment: docs/environment.yml
