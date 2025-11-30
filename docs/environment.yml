@@ -4,7 +4,7 @@ channels:
   - nodefaults
 dependencies:
   # runtimes
-  - python 3.11.*
+  - python 3.12.*
   - nodejs 24.*
   # run
   - ipywidgets >=8.0,<9
@@ -16,7 +16,9 @@ dependencies:
   - pydata-sphinx-theme
   - myst-parser
   # demo
-  - jupyterlab >=4,<5
+  - notebook >=7.5.0,<8
   - jupyterlite-core >=0.7.0,<0.8
+  - jupyterlite-core-with-libarchive
+  - jupyterlite-core-with-lab
   - jupyterlite-pyodide-kernel >=0.7.0,<0.8
   - jupyterlite-sphinx >=0.22.0,<0.23.0
